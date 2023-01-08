@@ -44,10 +44,11 @@ public class Sale {
     private List<Position> positions;
 
 
-    public Sale(long clientId, Date dateSale, List<Position> positions) {
+    public Sale(long clientId, Date dateSale, long receiptNumber) {
         this.clientId = clientId;
         this.dateSale = dateSale;
-        this.positions = positions;
+        this.positions = new ArrayList<>();
+        this.receiptNumber = receiptNumber;
     }
 
     public static List<SaleDto> listDto(List<Sale> list){

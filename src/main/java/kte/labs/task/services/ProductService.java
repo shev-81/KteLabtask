@@ -9,6 +9,7 @@ import kte.labs.task.exceptions.ResourceNotFoundException;
 import kte.labs.task.repositories.ProductRepository;
 import kte.labs.task.repositories.RatingRepository;
 import lombok.Data;
+import org.springframework.http.converter.json.GsonBuilderUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,12 +65,16 @@ public class ProductService {
         List<Long> productIds = productIdList(list);
         List<Product> productList = productRepository.findAllById(productIds);
         BigDecimal totalPrice = new BigDecimal(0);
+        long discountClient = ClientService.getIndividualDiscount(client, productList.size());
         for(Product P: productList) {
-            if(P.getDiscount() + ClientService.getIndividualDiscount(client, productList.size()) > TOTAL_DISCOUNT_PERCENT){
+            if(P.getDiscount() + discountClient > TOTAL_DISCOUNT_PERCENT){
                 throw new RuntimeException("The discount amount cannot exceed 18%");
             }
             if(P.getDiscount() > 0){
-                totalPrice = totalPrice.add(priceWithDiscountPercents(P.getPrice(), new BigDecimal(P.getDiscount())));
+                BigDecimal discountPr = new BigDecimal(P.getDiscount());
+                BigDecimal discountCl = new BigDecimal(discountClient);
+                BigDecimal fullDiscount = discountPr.add(discountCl);
+                totalPrice = totalPrice.add(priceWithDiscountPercents(P.getPrice(), fullDiscount));
                 continue;
             }
             totalPrice = totalPrice.add(P.getPrice());
@@ -78,7 +83,8 @@ public class ProductService {
     }
 
     public static BigDecimal priceWithDiscountPercents(BigDecimal base, BigDecimal pct){
-        return base.multiply(pct).divide(new BigDecimal(100));
+        BigDecimal tmpDiscount = base.divide(new BigDecimal(100)).multiply(pct);
+        return base.subtract(tmpDiscount);
     }
 
     public static List<Long> productIdList(List<QueryProductDto> list){

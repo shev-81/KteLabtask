@@ -30,6 +30,7 @@ public class MarketController {
 
     /**
      * Cписок клиентов (все атрибуты).
+     * http://localhost:8000/core/api/v1/market/clients
      * @return
      */
     @GetMapping("/clients")
@@ -39,6 +40,7 @@ public class MarketController {
 
     /**
      * Cписок товаров (идентификатор, наименование, цена).
+     * http://localhost:8000/core/api/v1/market/products
      * @return
      */
     @GetMapping("/products")
@@ -105,8 +107,8 @@ public class MarketController {
     @PostMapping("/sale/{clientId}/{totalPriceWithDiscount}")
     public String registrationOfSale(@RequestBody List<QueryProductDto> list,
                                      @PathVariable long clientId,
-                                     @PathVariable long totalPriceWithDiscount){
-        return saleService.getReceipt(list, clientId, totalPriceWithDiscount);
+                                     @PathVariable double totalPriceWithDiscount){
+        return saleService.getReceipt(list, clientId, new BigDecimal(totalPriceWithDiscount));
     }
 
     /**

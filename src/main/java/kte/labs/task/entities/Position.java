@@ -45,12 +45,13 @@ public class Position {
     @JoinColumn(name = "sales_id")
     private Sale sale;
 
-    public Position(long productId, long quantity, BigDecimal originalPrice, BigDecimal finalPrice, long finalDiscount) {
+    public Position(long productId, long quantity, BigDecimal originalPrice, BigDecimal finalPrice, long finalDiscount, Sale sale) {
         this.productId = productId;
         this.quantity = quantity;
         this.originalPrice = originalPrice;
         this.finalPrice = finalPrice;
         this.finalDiscount = finalDiscount;
+        this.sale = sale;
     }
 
     public static List<PositionDto> listDto(List<Position> list){

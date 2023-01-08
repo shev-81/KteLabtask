@@ -12,4 +12,7 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     @Query("select s from Sale s where s.clientId = ?1")
     List<Sale> findAllByClientId(long clientId);
+
+    @Query(nativeQuery = true, value = "SELECT MAX(receipt_number) FROM sales")
+    long findByMaxId();
 }

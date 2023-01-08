@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -44,18 +43,20 @@ public class SaleService {
     }
 
     @Transactional
-    public String getReceipt(List<QueryProductDto> list, long  clientId, long totalPriceWithDiscount){
+    public String getReceipt(List<QueryProductDto> list, long  clientId, BigDecimal totalPriceFromQuery){
         ClientDto clientDto = clientService.getClientById(clientId);
-        BigDecimal totalPriceFromQuery = new BigDecimal(totalPriceWithDiscount);
         long individualDiscount = ClientService.getIndividualDiscount(clientDto, list.size());
-        BigDecimal totalPriceInSystem = ProductService.priceWithDiscountPercents(productService.calculateTotalPrice(list, clientDto), new BigDecimal(individualDiscount));
+        BigDecimal totalPriceInSystem = productService.calculateTotalPrice(list, clientDto);
         if(!totalPriceFromQuery.equals(totalPriceInSystem)){
             throw new RuntimeException("The transferred full price differs from the full price in the system");
         }
+        System.out.println(totalPriceInSystem);
         List<Long> productIds = ProductService.productIdList(list);
         List<Product> productList = productService.getProducts(productIds);
         Map<Long, Product> mapProduct = Product.makeMap(productList);
-        List<Position> positionList = new ArrayList<>();
+        long newReceiptNumber = saleRepository.findByMaxId() + 1;
+        Sale sale = new Sale(clientId, new Date(), newReceiptNumber);
+        Sale sale1 = saleRepository.save(sale);
         for(QueryProductDto product: list){
             BigDecimal price = mapProduct.get(product.getProductId()).getPrice();
             Position position = new Position(
@@ -63,13 +64,12 @@ public class SaleService {
                     product.getQuantity(),
                     price,
                     ProductService.priceWithDiscountPercents(price,new BigDecimal(individualDiscount)),
-                    individualDiscount);
-            positionList.add(position);
+                    individualDiscount,
+                    sale1
+                    );
+            positionRepository.saveAndFlush(position);
         }
-        positionRepository.saveAll(positionList);
-        Sale sale = new Sale(clientId, new Date(), positionList);
-        Sale sale1 = saleRepository.save(sale);
-        return "00" + sale1.getReceiptNumber();
+        return "00" + newReceiptNumber;
     }
 
     public StatisticsDto getStatistics(Long clientId, Long productId){
